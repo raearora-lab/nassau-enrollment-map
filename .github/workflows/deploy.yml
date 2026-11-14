@@ -15,8 +15,23 @@ jobs:
         uses: actions/checkout@v4
       - name: Deploy to Cloudflare Pages
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
           CLOUDFLARE_ACCOUNT_ID: 69e84452e69fcd90dfa533795190f95f
         run: |
-          npx -y wrangler@4 pages project create nassau-enrollment --production-branch=main || true
-          npx -y wrangler@4 pages deploy public --project-name=nassau-enrollment --branch=main --commit-dirty=true
+          set +e
+          npx -y wrangler@4 pages project create nassau-enrollment --production-branch=main
+          echo "project create exit $?"
+          attempt=1
+          while [ "$attempt" -le 5 ]; do
+            echo "deploy attempt $attempt"
+            npx -y wrangler@4 pages deploy public --project-name=nassau-enrollment --branch=main --commit-dirty=true
+            if [ $? -eq 0 ]; then
+              exit 0
+            fi
+            sleep_for=$((attempt * 40))
+            echo "deploy failed; sleeping ${sleep_for}s"
+            sleep "$sleep_for"
+            attempt=$((attempt + 1))
+          done
+          exit 1
