@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nassau County party enrollment — Who Runs NY</title>
+  <meta name="description" content="Interactive map of November 1, 2026 New York State voter enrollment in Nassau County, by election district, Congress, State Senate, Assembly, county legislature, and town. Blank registrations outnumber Republicans.">
+  <link rel="canonical" href="https://nassau-enrollment.pages.dev/">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Rae Arora · Who Runs NY">
+  <meta property="og:title" content="Nassau County party enrollment">
+  <meta property="og:description" content="1,071,540 registered voters as of November 1, 2026. Democrats 401,119, blank 331,908, Republicans 323,075. Interactive map of every Nassau election district.">
+  <meta property="og:url" content="https://nassau-enrollment.pages.dev/">
+  <meta property="og:image" content="https://nassau-enrollment.pages.dev/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Neon map of Nassau County party enrollment on black: 1,071,540 registered voters, Democrats outnumber Republicans, blank registrations 331,908.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nassau County party enrollment — Who Runs NY">
+  <meta name="twitter:description" content="Interactive map of November 1, 2026 party enrollment in every Nassau election district. Blank registrations outnumber Republicans.">
+  <meta name="twitter:image" content="https://nassau-enrollment.pages.dev/og.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <a class="skip" href="#map">Skip to map</a>
+  <header class="site-header">
+    <div class="brand">
+      <a class="wordmark" href="https://whorunsny.org" rel="noopener">Who Runs NY</a>
+      <span class="dot" aria-hidden="true"></span>
+      <span class="kicker">Nassau enrollment</span>
+    </div>
+    <nav class="nav" aria-label="On this page">
+      <a href="#map-stage">Map</a>
+      <a href="#congress">Congress</a>
+      <a href="#senate">Senate</a>
+      <a href="#assembly">Assembly</a>
+      <a href="#legislature">Legislature</a>
+      <a href="#towns">Towns</a>
+      <a href="#explorer">ED explorer</a>
+      <a href="#methodology">Sources</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="top">
+    <p class="eyebrow">NYS Board of Elections · as of <span id="as-of-label">November 1, 2026</span></p>
+    <h1>Nassau County <em>party enrollment</em></h1>
+    <p class="lede">Every registered voter, every election district — Democrats, Republicans, and the blank column that now outnumbers the GOP. Zoom the map, switch the choropleth, and click a district for official totals.</p>
+    <div class="hero-stats" id="hero-stats" aria-live="polite"></div>
+  </section>
+
+  <section id="map-stage" class="map-stage">
+    <div id="map" role="application" aria-label="Interactive map of Nassau County election districts"></div>
+    <div class="map-ui">
+      <div class="map-panel controls">
+        <label class="field">
+          <span>Color by</span>
+          <select id="mode"></select>
+        </label>
+        <label class="field">
+          <span>Highlight a district</span>
+          <select id="district-pick"><option value="">Countywide</option></select>
+        </label>
+        <label class="field">
+          <span>Search ED or town</span>
+          <input id="search" type="search" placeholder="HEM 18010, Oyster Bay…" autocomplete="off">
+        </label>
+        <div id="search-results" class="search-results" hidden></div>
+        <fieldset class="overlays">
+          <legend>Boundaries</legend>
+          <label><input type="checkbox" name="overlay" value="cd"> Congressional</label>
+          <label><input type="checkbox" name="overlay" value="sd"> State Senate</label>
+          <label><input type="checkbox" name="overlay" value="ad"> Assembly</label>
+          <label><input type="checkbox" name="overlay" value="ld"> County Legislature</label>
+          <label><input type="checkbox" name="overlay" value="town"> Town / city</label>
+        </fieldset>
+        <div class="control-row">
+          <label class="check"><input type="checkbox" id="streets"> Faint streets</label>
+          <button type="button" id="reset" class="btn">Reset view</button>
+        </div>
+      </div>
+      <div class="map-panel legend" id="legend"></div>
+      <aside class="map-panel hover-card" id="hover-card">
+        <p class="hint">Hover or tap an election district for its full party breakdown, active and inactive counts, and its Congress, Senate, Assembly, legislature, and town.</p>
+      </aside>
+    </div>
+  </section>
+
+  <main class="page">
+    <section class="finding" id="finding">
+      <h2>Blank outnumbers Republican</h2>
+      <p id="finding-copy"></p>
+    </section>
+
+    <section id="congress">
+      <h2>Congressional districts</h2>
+      <p class="section-note">Nassau portions of the 119th Congress map. CD 4 is entirely in Nassau; CD 2 also covers Suffolk; CD 3 also covers Queens and Suffolk. Tables and bars use official NYS Board of Elections Nassau totals, not the map join.</p>
+      <div class="chart" id="chart-cd"></div>
+      <div class="table-wrap" id="table-cd"></div>
+    </section>
+
+    <section id="senate">
+      <h2>State Senate districts</h2>
+      <p class="section-note">Nassau portions. SD 5, 6, 7, and 9 are Nassau-only; SD 8 also covers Suffolk.</p>
+      <div class="chart" id="chart-sd"></div>
+      <div class="table-wrap" id="table-sd"></div>
+    </section>
+
+    <section id="assembly">
+      <h2>State Assembly districts</h2>
+      <p class="section-note">AD 13–22 are Nassau-only. AD 9, 10, and 11 also cover Suffolk. Closest races on the enrollment roll: AD 20 (D+312) and AD 15 (R+498).</p>
+      <div class="chart" id="chart-ad"></div>
+      <div class="table-wrap" id="table-ad"></div>
+    </section>
+
+    <section id="legislature">
+      <h2>County legislative districts</h2>
+      <p class="section-note">Local Law 1 of 2025 map (consent decree January 22, 2025; maps printed March 13, 2025). Legislator names are from the official 2026 Elected Officials List, which does not state party. Closest: LD 13 (D+1,173) and LD 10 (D+1,222). Five election districts totaling 797 voters could not be assigned from the official maps.</p>
+      <div class="chart" id="chart-ld"></div>
+      <div class="table-wrap" id="table-ld"></div>
+    </section>
+
+    <section id="towns">
+      <h2>Towns and cities</h2>
+      <p class="section-note">Derived from the official election-district town prefix. Totals sum to the county file. Oyster Bay is the only town where Republicans outnumber Democrats.</p>
+      <div class="chart" id="chart-town"></div>
+      <div class="table-wrap" id="table-town"></div>
+    </section>
+
+    <section id="explorer">
+      <h2>Election district explorer</h2>
+      <p class="section-note">All 1,085 election districts in the November 1, 2026 Nassau enrollment file. Thirteen have no June 2025 GIS polygon and do not appear on the map; they are still in this table.</p>
+      <div class="explorer-controls">
+        <input id="ex-q" type="search" placeholder="Search ED, town, or district…">
+        <select id="ex-town"><option value="">All towns</option></select>
+        <select id="ex-cd"><option value="">All CDs</option></select>
+        <select id="ex-sd"><option value="">All SDs</option></select>
+        <select id="ex-ad"><option value="">All ADs</option></select>
+        <select id="ex-ld"><option value="">All LDs</option></select>
+        <select id="ex-sort"></select>
+      </div>
+      <div class="table-wrap" id="ex-table"></div>
+      <div class="pager" id="ex-pager"></div>
+    </section>
+
+    <section id="methodology" class="methodology">
+      <h2>Methodology and sources</h2>
+      <div id="method-body"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>A <a href="https://whorunsny.org" rel="noopener">Who Runs NY</a> project by Rae Arora. Enrollment figures are from the New York State Board of Elections. This page does not speak for the Board or for Nassau County.</p>
+  </footer>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
